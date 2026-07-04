@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards App</title>
+
+  <!-- Favicon: SVG (modern browsers) + ICO (fallback for older browsers) -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+  <link rel="alternate icon" href="assets/favicon/favicon.ico" />
+
+  <!-- Tabler outline icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ========================================================
+       APP WRAPPER
+       Contains all sections: header, tab-bar, and the 4 views
+  ======================================================== -->
+  <div class="app" role="main">
+
+    <!-- Loading screen (hidden after JS init) -->
+    <div id="loading-screen" class="loading-screen" aria-live="polite">
+      <i class="ti ti-stack-2" aria-hidden="true"></i>
+      <span data-i18n="loading">Loading…</span>
+    </div>
+
+    <!-- ── HEADER ─────────────────────────────────────────── -->
+    <header class="top-bar">
+      <div class="app-title">
+        <i class="ti ti-stack-2" aria-hidden="true"></i>
+        <span data-i18n="appTitle">Flashcards</span>
+      </div>
+
+      <div class="header-right">
+        <!-- Global SRS badges: "N new" and "N due" -->
+        <div id="srs-badges" class="badge-row" aria-label="Global statistics"></div>
+
+        <!-- Language toggle: EN / IT manual switch -->
+        <div class="lang-toggle" role="group" aria-label="Language selector">
+          <button class="lang-btn" id="lang-en" onclick="setLanguage('en')" aria-pressed="false">EN</button>
+          <button class="lang-btn" id="lang-it" onclick="setLanguage('it')" aria-pressed="false">IT</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── TAB-BAR ────────────────────────────────────────── -->
+    <nav class="tab-bar" role="tablist" aria-label="Main navigation">
+      <button class="tab active" role="tab" aria-selected="true"
+              onclick="showTab('decks', this)">
+        <i class="ti ti-layout-grid" aria-hidden="true"></i>
+        <span data-i18n="tabDecks">Decks</span>
+      </button>
+      <button class="tab" role="tab" aria-selected="false"
+              onclick="showTab('editor', this)">
+        <i class="ti ti-edit" aria-hidden="true"></i>
+        <span data-i18n="tabEditor">Create deck</span>
+      </button>
+    </nav>
+
+    <!-- ================================================
+         VIEW 1 — DECK GRID
+         Shows all available decks with SRS badges
+    ================================================ -->
+    <section id="view-decks" class="view active" role="tabpanel">
+      <div class="deck-grid" id="deck-grid" aria-label="Deck list"></div>
+    </section>
+
+    <!-- ================================================
+         VIEW 2 — STUDY SESSION
+         Card, timer, rating buttons and navigation
+    ================================================ -->
+    <section id="view-study" class="view" role="tabpanel" aria-label="Study session">
+
+      <!-- Session header: back button + title + counters -->
+      <div class="study-header">
+        <button class="back-btn" onclick="goBack()" aria-label="Back to decks">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+          <span data-i18n="backToDecks">Decks</span>
+        </button>
+        <span class="study-title" id="study-title"></span>
+        <div class="stats-row" aria-label="Session score">
+          <span class="pill pill-green">
+            <i class="ti ti-check" aria-hidden="true"></i>
+            <span id="st-ok">0</span>
+          </span>
+          <span class="pill pill-red">
+            <i class="ti ti-x" aria-hidden="true"></i>
+            <span id="st-ko">0</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Progress bar: fills up as the user advances through the deck -->
+      <div class="prog-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+           aria-valuenow="0" aria-label="Session progress">
+        <div class="prog-fill" id="prog"></div>
+      </div>
+
+      <!-- Timer with visual bar and numeric countdown -->
+      <div class="timer-row" id="timer-row" aria-label="Timer">
+        <i class="ti ti-clock timer-icon" aria-hidden="true"></i>
+        <div class="timer-display" id="timer-disp">15</div>
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-fill" id="timer-bar"></div>
+        </div>
+      </div>
+
+      <!-- ── FLASHCARD (3D flip) ───────────────────────── -->
+      <!--
+        .fc-wrap   → 3D perspective container
+        .fc-inner  → element that rotates on the Y axis
+        .fc-front  → question side (visible by default)
+        .fc-back   → answer side (pre-rotated 180°, visible after flip)
+        Adding the .flipped class to .fc-wrap triggers the rotation
+      -->
+      <div class="fc-wrap" id="fc-wrap" onclick="flipCard()"
+           role="button" tabindex="0" aria-label="Click to flip the card"
+           onkeydown="if(event.key==='Enter'||event.key===' ')flipCard()">
+        <div class="fc-inner" id="fc-inner">
+
+          <!-- Front: QUESTION -->
+          <div class="fc-face fc-front">
+            <div class="fc-lbl front" data-i18n="question">question</div>
+            <div class="fc-q" id="fc-q"></div>
+            <div class="fc-hint" data-i18n="tapToFlip">tap to flip</div>
+          </div>
+
+          <!-- Back: ANSWER -->
+          <div class="fc-face fc-back">
+            <div class="fc-lbl back" data-i18n="answer">answer</div>
+            <div class="fc-a" id="fc-a"></div>
+          </div>
+
+        </div>
+      </div>
+      <!-- ── End flashcard ─────────────────────────────── -->
+
+      <!-- "Flip" button (visible before the flip) -->
+      <div class="action-row" id="act-flip">
+        <button class="ac-btn ac-flip" onclick="flipCard()">
+          <i class="ti ti-rotate-clockwise" aria-hidden="true"></i>
+          <span data-i18n="flip">Flip</span>
+        </button>
+      </div>
+
+      <!-- Rating buttons (visible after the flip) -->
+      <div class="action-row" id="act-rate" style="display:none;">
+        <button class="ac-btn ac-wrong" onclick="rate(0)">
+          <i class="ti ti-x" aria-hidden="true"></i>
+          <span data-i18n="didntKnow">Didn't know</span>
+        </button>
+        <button class="ac-btn ac-correct" onclick="rate(2)">
+          <i class="ti ti-check" aria-hidden="true"></i>
+          <span data-i18n="knewIt">Knew it</span>
+        </button>
+      </div>
+
+      <!-- Manual navigation between cards -->
+      <div class="nav-row">
+        <button class="nav-btn" onclick="navPrev()" aria-label="Previous card">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+        </button>
+        <span class="nav-counter" id="nav-counter" aria-live="polite">1 / 1</span>
+        <button class="nav-btn" onclick="navNext()" aria-label="Next card">
+          <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ================================================
+         VIEW 3 — SESSION SUMMARY
+         Shown after all cards have been reviewed
+    ================================================ -->
+    <section id="view-summary" class="view" role="tabpanel" aria-label="Session summary">
+      <div class="summary-box">
+        <i class="ti ti-trophy sum-icon" aria-hidden="true"></i>
+        <div class="sum-title" data-i18n="sessionComplete">Session complete!</div>
+        <div class="sum-sub" id="sum-sub"></div>
+
+        <!-- Final scores -->
+        <div class="sum-scores">
+          <div class="sum-box g">
+            <div class="sn" id="sum-ok">0</div>
+            <div class="sl" data-i18n="correct">Correct</div>
+          </div>
+          <div class="sum-box r">
+            <div class="sn" id="sum-ko">0</div>
+            <div class="sl" data-i18n="toReview">To review</div>
+          </div>
+        </div>
+
+        <div class="sum-pct" id="sum-pct"></div>
+
+        <!-- Post-session actions -->
+        <div class="sum-btn-row">
+          <button class="ac-btn ac-flip" onclick="restartStudy()">
+            <i class="ti ti-refresh" aria-hidden="true"></i>
+            <span data-i18n="restart">Restart</span>
+          </button>
+          <button class="ac-btn ac-correct" onclick="goBack()">
+            <i class="ti ti-layout-grid" aria-hidden="true"></i>
+            <span data-i18n="allDecks">All decks</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================
+         VIEW 4 — DECK EDITOR
+         Lets the user create a new custom deck
+    ================================================ -->
+    <section id="view-editor" class="view" role="tabpanel" aria-label="Create new deck">
+
+      <!-- Deck name field -->
+      <div class="editor-section">
+        <div class="ed-title" data-i18n="deckNameLabel">Deck name</div>
+        <div class="ed-row">
+          <input class="ed-input" id="deck-name-inp"
+                 data-i18n-placeholder="deckNamePlaceholder"
+                 placeholder="E.g. History, English…"
+                 aria-label="Deck name" />
+        </div>
+      </div>
+
+      <!-- Add cards form -->
+      <div class="editor-section">
+        <div class="ed-title" data-i18n="addCardsLabel">Add cards</div>
+        <div class="ed-row">
+          <input class="ed-input" id="inp-q"
+                 data-i18n-placeholder="questionPlaceholder"
+                 placeholder="Question" aria-label="Card question" />
+          <input class="ed-input" id="inp-a"
+                 data-i18n-placeholder="answerPlaceholder"
+                 placeholder="Answer" aria-label="Card answer" />
+          <button class="ed-add-btn" onclick="addCard()" aria-label="Add card">
+            <i class="ti ti-plus" aria-hidden="true"></i>
+            <span data-i18n="addBtn">Add</span>
+          </button>
+        </div>
+
+        <!-- List of added cards -->
+        <div class="card-list" id="card-list" aria-label="Added cards"></div>
+      </div>
+
+      <!-- Save the deck -->
+      <button class="create-deck-btn" onclick="saveDeck()">
+        <i class="ti ti-device-floppy" aria-hidden="true"></i>
+        <span data-i18n="saveDeck">Save deck</span>
+      </button>
+
+    </section>
+
+  </div><!-- end .app -->
+
+  <!-- Main script (loaded last so it doesn't block rendering) -->
+  <script src="js/script.js"></script>
+
+</body>
+</html>

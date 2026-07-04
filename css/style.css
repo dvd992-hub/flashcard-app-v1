@@ -1,0 +1,962 @@
+/* ============================================================
+   FLASHCARDS APP — style.css
+   Structure:
+     1. Reset & CSS variables
+     2. Global layout (app wrapper, header, tab-bar)
+     3. Language toggle
+     4. Deck grid and deck cards
+     5. SRS badges (new / due / all caught up)
+     6. Study session (progress bar, timer, 3D flashcard)
+     7. Action buttons (flip, rate, navigate)
+     8. Summary screen
+     9. Deck editor
+    10. Loading screen
+    11. Responsive (mobile ≤ 480px)
+============================================================ */
+
+
+/* ── 1. RESET & VARIABLES ─────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Primary palette — purple for UI chrome */
+  --purple-50:  #EEEDFE;
+  --purple-100: #CECBF6;
+  --purple-200: #AFA9EC;
+  --purple-400: #7F77DD;
+  --purple-600: #534AB7;
+  --purple-800: #3C3489;
+  --purple-900: #26215C;
+
+  /* Teal — answer side of cards */
+  --teal-50:  #E1F5EE;
+  --teal-100: #9FE1CB;
+  --teal-200: #5DCAA5;
+  --teal-600: #0F6E56;
+  --teal-800: #085041;
+  --teal-900: #04342C;
+
+  /* Green — "correct" */
+  --green-50:  #EAF3DE;
+  --green-100: #C0DD97;
+  --green-600: #3B6D11;
+  --green-800: #27500A;
+
+  /* Red — "wrong" */
+  --red-50:  #FCEBEB;
+  --red-100: #F7C1C1;
+  --red-200: #F09595;
+  --red-600: #A32D2D;
+  --red-800: #791F1F;
+
+  /* Amber — "due" badge + custom decks */
+  --amber-50:  #FAEEDA;
+  --amber-100: #FAC775;
+  --amber-600: #854F0B;
+  --amber-800: #633806;
+
+  /* Blue — Capitals deck */
+  --blue-50:  #E6F1FB;
+  --blue-600: #185FA5;
+  --blue-800: #0C447C;
+
+  /* Neutrals */
+  --bg:        #ffffff;
+  --bg-alt:    #f5f5f3;
+  --border:    rgba(0, 0, 0, 0.15);
+  --border-md: rgba(0, 0, 0, 0.30);
+  --text:      #1a1a1a;
+  --text-muted:#666;
+  --text-hint: #999;
+
+  /* Typography */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Border radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+}
+
+/* Automatic dark scheme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #1c1c1e;
+    --bg-alt:    #2c2c2e;
+    --border:    rgba(255,255,255,0.12);
+    --border-md: rgba(255,255,255,0.25);
+    --text:      #f0f0f0;
+    --text-muted:#aaa;
+    --text-hint: #666;
+  }
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-alt);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem 3rem;
+}
+
+
+/* ── 2. GLOBAL LAYOUT ──────────────────────────────────── */
+
+/* Main container: centered max-width */
+.app {
+  width: 100%;
+  max-width: 680px;
+  background: var(--bg);
+  border-radius: var(--r-lg);
+  border: 0.5px solid var(--border);
+  padding: 1.25rem 1.25rem 2rem;
+  position: relative;
+}
+
+/* Utility: screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Header: app title + global badges + language toggle */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-title .ti {
+  font-size: 22px;
+  color: var(--purple-400);
+}
+
+/* Right side of header: SRS badges + language toggle grouped together */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Row of global badges */
+.badge-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Tab navigation bar */
+.tab-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 7px 16px;
+  border-radius: var(--r-pill);
+  border: 0.5px solid var(--border-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover:not(.active) {
+  background: var(--bg-alt);
+}
+
+/* Active tab: light purple background */
+.tab.active {
+  color: var(--purple-900);
+  background: var(--purple-50);
+  border-color: var(--purple-200);
+}
+
+/* View sections: shown/hidden via JS */
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+
+/* ── 3. LANGUAGE TOGGLE ────────────────────────────────── */
+
+/*
+  Hybrid language solution:
+  - On first load, navigator.language picks the default (en/it)
+  - The toggle below lets the user override it manually
+  - The choice is persisted in localStorage and remembered on return visits
+  See setLanguage() and detectInitialLanguage() in js/script.js
+*/
+
+.lang-toggle {
+  display: flex;
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.lang-btn {
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-btn:hover {
+  background: var(--bg-alt);
+}
+
+/* Active language: filled purple pill */
+.lang-btn[aria-pressed="true"] {
+  background: var(--purple-400);
+  color: #fff;
+}
+
+
+/* ── 4. DECK GRID ──────────────────────────────────────── */
+
+/* Responsive grid: more columns on desktop, 2 on mobile */
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 1.25rem;
+}
+
+/* Deck card: clickable, color-coded by category */
+.deck-card {
+  border-radius: var(--r-md);
+  border: 0.5px solid transparent;
+  padding: 1rem;
+  cursor: pointer;
+  transition: filter 0.15s, border-color 0.15s;
+}
+
+.deck-card:hover {
+  filter: brightness(0.96);
+  border-color: var(--border-md);
+}
+
+/* Colors per deck category */
+.deck-card.capitals { background: var(--blue-50); }
+.deck-card.math     { background: var(--purple-50); }
+.deck-card.science  { background: var(--teal-50); }
+.deck-card.custom   { background: var(--amber-50); }
+
+/* Large icon in the deck card */
+.deck-icon {
+  font-size: 26px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.deck-card.capitals .deck-icon { color: var(--blue-800); }
+.deck-card.math     .deck-icon { color: var(--purple-800); }
+.deck-card.science  .deck-icon { color: var(--teal-800); }
+.deck-card.custom   .deck-icon { color: var(--amber-800); }
+
+/* Deck name */
+.deck-name {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.deck-card.capitals .deck-name { color: var(--blue-800); }
+.deck-card.math     .deck-name { color: var(--purple-800); }
+.deck-card.science  .deck-name { color: var(--teal-800); }
+.deck-card.custom   .deck-name { color: var(--amber-800); }
+
+/* Card count */
+.deck-count {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.deck-card.capitals .deck-count { color: var(--blue-600); }
+.deck-card.math     .deck-count { color: var(--purple-600); }
+.deck-card.science  .deck-count { color: var(--teal-600); }
+.deck-card.custom   .deck-count { color: var(--amber-600); }
+
+/* SRS badge row inside the deck card */
+.deck-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+
+/* ── 5. SRS BADGES ─────────────────────────────────────── */
+
+/*
+  Badges encode the SRS state of each deck:
+  - "new"          → never studied        → blue
+  - "due"          → interval expired     → amber
+  - "all caught up"→ nothing due          → green
+*/
+
+.srs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.srs-new {
+  background: var(--blue-50);
+  color: var(--blue-800);
+}
+
+.srs-due {
+  background: var(--amber-50);
+  color: var(--amber-800);
+}
+
+.srs-ok {
+  background: var(--green-50);
+  color: var(--green-800);
+}
+
+/* Larger pills used in the global header */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pill-green  { background: var(--green-50);  color: var(--green-800); }
+.pill-red    { background: var(--red-50);    color: var(--red-800); }
+.pill-purple { background: var(--purple-50); color: var(--purple-800); }
+.pill-amber  { background: var(--amber-50);  color: var(--amber-800); }
+
+
+/* ── 6. STUDY SESSION ──────────────────────────────────── */
+
+/* Session header: back button, title, scores */
+.study-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.back-btn {
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--border-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.12s;
+}
+
+.back-btn:hover { background: var(--bg-alt); }
+
+.study-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.stats-row {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Horizontal progress bar */
+.prog-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-alt);
+  border-radius: 3px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: var(--purple-400);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+/* Timer: icon + number + visual bar */
+.timer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.timer-row .ti {
+  font-size: 16px;
+  color: var(--purple-600);
+}
+
+.timer-display {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--purple-800);
+  background: var(--purple-50);
+  border-radius: var(--r-sm);
+  padding: 4px 12px;
+  min-width: 36px;
+  text-align: center;
+}
+
+.timer-bar-wrap {
+  flex: 1;
+  height: 4px;
+  background: var(--purple-50);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.timer-bar-fill {
+  height: 100%;
+  background: var(--purple-400);
+  border-radius: 2px;
+  width: 100%;
+  transition: width 0.1s linear;
+}
+
+/* ── 3D FLASHCARD ──────────────────────────────────────── */
+
+/*
+  Pure CSS flip mechanism:
+  1. .fc-wrap   → sets the 3D perspective
+  2. .fc-inner  → the element that rotates; uses transform-style: preserve-3d
+  3. .fc-face   → both faces; backface-visibility: hidden hides them
+                  when facing "away" from the viewer
+  4. .fc-back   → pre-rotated 180° on the Y axis
+  5. .fc-wrap.flipped .fc-inner → rotates the inner element 180°, bringing
+                                  the back face to the front
+*/
+
+.fc-wrap {
+  perspective: 1000px;
+  width: 100%;
+  height: 230px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  outline: none; /* handled via focus-visible */
+}
+
+.fc-wrap:focus-visible {
+  box-shadow: 0 0 0 3px var(--purple-400);
+  border-radius: var(--r-md);
+}
+
+.fc-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Class toggled by JS to trigger the flip */
+.fc-wrap.flipped .fc-inner {
+  transform: rotateY(180deg);
+}
+
+/* Properties shared by both faces */
+.fc-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-md);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden; /* Safari */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* Front: light purple background */
+.fc-front {
+  background: var(--purple-50);
+  border: 0.5px solid var(--purple-200);
+}
+
+/* Back: teal background, pre-rotated */
+.fc-back {
+  background: var(--teal-50);
+  border: 0.5px solid var(--teal-200);
+  transform: rotateY(180deg);
+}
+
+/* "Question" / "Answer" label */
+.fc-lbl {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.fc-lbl.front { color: var(--purple-600); }
+.fc-lbl.back  { color: var(--teal-600); }
+
+/* Question text */
+.fc-q {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--purple-900);
+  line-height: 1.4;
+}
+
+/* Answer text */
+.fc-a {
+  font-size: 17px;
+  color: var(--teal-900);
+  line-height: 1.5;
+}
+
+/* "Tap to flip" hint */
+.fc-hint {
+  font-size: 12px;
+  color: var(--purple-400);
+  margin-top: 1rem;
+}
+
+
+/* ── 7. ACTION BUTTONS ─────────────────────────────────── */
+
+/* Centered container */
+.action-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Shared base for all action buttons */
+.ac-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 22px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  border: 0.5px solid transparent;
+  transition: background 0.12s, filter 0.12s, transform 0.1s;
+}
+
+.ac-btn:active { transform: scale(0.96); }
+
+/* Flip: purple */
+.ac-flip {
+  background: var(--purple-50);
+  border-color: var(--purple-200);
+  color: var(--purple-800);
+}
+.ac-flip:hover { background: var(--purple-100); }
+
+/* Wrong: red */
+.ac-wrong {
+  background: var(--red-50);
+  border-color: var(--red-200);
+  color: var(--red-800);
+}
+.ac-wrong:hover { background: var(--red-100); }
+
+/* Correct: green */
+.ac-correct {
+  background: var(--green-50);
+  border-color: var(--green-100);
+  color: var(--green-800);
+}
+.ac-correct:hover { background: var(--green-100); }
+
+/* Manual navigation (previous / next) */
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.nav-btn {
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--border-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.12s;
+}
+
+.nav-btn:hover { background: var(--bg-alt); }
+
+.nav-counter {
+  font-size: 13px;
+  color: var(--text-hint);
+}
+
+
+/* ── 8. SUMMARY SCREEN ─────────────────────────────────── */
+
+.summary-box {
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+  background: var(--bg);
+}
+
+/* Trophy icon */
+.sum-icon {
+  font-size: 40px;
+  color: var(--amber-100);
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.sum-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.sum-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* Final score grid */
+.sum-scores {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.sum-box {
+  padding: 12px 28px;
+  border-radius: var(--r-md);
+  text-align: center;
+}
+
+.sum-box.g { background: var(--green-50); }
+.sum-box.r { background: var(--red-50); }
+
+/* Large number */
+.sum-box .sn {
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.sum-box.g .sn { color: var(--green-800); }
+.sum-box.r .sn { color: var(--red-800); }
+
+/* Label below the number */
+.sum-box .sl {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.sum-box.g .sl { color: var(--green-600); }
+.sum-box.r .sl { color: var(--red-600); }
+
+.sum-pct {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.sum-btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
+/* ── 9. DECK EDITOR ─────────────────────────────────────── */
+
+.editor-section {
+  margin-bottom: 1.5rem;
+}
+
+.ed-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+/* Row with input(s) + button */
+.ed-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ed-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--border-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+  transition: border-color 0.15s;
+}
+
+.ed-input:focus {
+  outline: none;
+  border-color: var(--purple-400);
+  box-shadow: 0 0 0 2px rgba(127, 119, 221, 0.15);
+}
+
+.ed-input::placeholder { color: var(--text-hint); }
+
+/* "Add card" button */
+.ed-add-btn {
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--purple-200);
+  background: var(--purple-50);
+  color: var(--purple-800);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.12s;
+}
+
+.ed-add-btn:hover { background: var(--purple-100); }
+
+/* Scrollable list of added cards */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  /* Thin scrollbar on supporting browsers */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-md) transparent;
+}
+
+/* Single card row in the editor */
+.card-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--border);
+  background: var(--bg-alt);
+}
+
+.card-item-texts { flex: 1; }
+
+.card-item-q {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.card-item-a {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Delete card button */
+.del-btn {
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-hint);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 12px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.del-btn:hover {
+  background: var(--red-50);
+  color: var(--red-800);
+  border-color: var(--red-200);
+}
+
+/* Main "Save deck" button */
+.create-deck-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--purple-200);
+  background: var(--purple-50);
+  color: var(--purple-800);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.12s;
+}
+
+.create-deck-btn:hover { background: var(--purple-100); }
+
+
+/* ── 10. LOADING SCREEN ────────────────────────────────── */
+
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 3rem;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.loading-screen .ti {
+  font-size: 24px;
+  color: var(--purple-400);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hides the loading screen once the app is ready */
+.loading-screen.hidden {
+  display: none;
+}
+
+
+/* ── 11. RESPONSIVE ─────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  body {
+    padding: 0.5rem 0.5rem 2rem;
+  }
+
+  .app {
+    border-radius: var(--r-sm);
+    padding: 1rem 1rem 1.5rem;
+  }
+
+  /* 2 columns on small screens */
+  .deck-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Final scores stack vertically */
+  .sum-scores {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* More compact action buttons */
+  .ac-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  /* Taller card on mobile for readability */
+  .fc-wrap {
+    height: 200px;
+  }
+
+  /* Editor: stacked inputs on mobile */
+  .ed-row {
+    flex-direction: column;
+  }
+
+  .ed-add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Header right side wraps under the title on narrow screens */
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
